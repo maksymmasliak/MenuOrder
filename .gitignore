@@ -1,0 +1,25 @@
+# Secrets: Docker env (root) and application env. Only .env.example files are committed.
+.env
+app/.env
+
+# Local AI-assistant setup and personal task list
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+docs/tasks.md
+
+# IDE
+.idea/
+
+# Dependencies and build output
+app/vendor/
+node_modules/
+app/public/assets/
+
+# Uploaded dish photos (keep the folder itself)
+app/public/uploads/*
+!app/public/uploads/.gitkeep
+
+# Tool caches
+app/.phpunit.cache/
+app/.php-cs-fixer.cache

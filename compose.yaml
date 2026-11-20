@@ -1,0 +1,74 @@
+# Базові сервіси MenuOrder. База даних підключається окремим файлом
+# через COMPOSE_FILE у .env (docker/compose/mysql.yaml).
+
+# Спільні налаштування для всіх контейнерів з PHP (app, cron).
+x-php: &php
+  image: ${COMPOSE_PROJECT_NAME:?Задай COMPOSE_PROJECT_NAME у .env}-php:${PHP_VERSION:-8.4}
+  build:
+    context: ./docker/php
+    args:
+      PHP_VERSION: ${PHP_VERSION:-8.4}
+      PHP_EXTENSIONS: ${PHP_EXTENSIONS:-gd opcache pdo_mysql}
+      INSTALL_XDEBUG: ${INSTALL_XDEBUG:-0}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+  volumes:
+    - ./app:/var/www/html
+    # Спільний кеш Composer для всіх проєктів.
+    - ${HOME}/.cache/composer:/var/www/.composer/cache
+  environment:
+    # Доступ до БД — єдине джерело правди: кореневий .env.
+    # app/.env (phpdotenv, immutable) ці змінні не перезаписує.
+    DB_HOST: db
+    DB_PORT: 3306
+    DB_NAME: ${DB_NAME}
+    DB_USER: ${DB_USER}
+    DB_PASSWORD: ${DB_PASSWORD}
+    XDEBUG_MODE: ${XDEBUG_MODE:-off}
+    # PhpStorm: Settings -> PHP -> Servers, ім'я сервера = COMPOSE_PROJECT_NAME
+    PHP_IDE_CONFIG: serverName=${COMPOSE_PROJECT_NAME}
+  extra_hosts:
+    # На Linux host.docker.internal сам не існує — потрібен Xdebug, щоб достукатись до IDE.
+    - host.docker.internal:host-gateway
+
+services:
+  app:
+    <<: *php
+
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      # 127.0.0.1 — сайт видно лише з твого ноутбука, не з усієї Wi-Fi мережі.
+      - "127.0.0.1:${HOST_APP_PORT:-8080}:80"
+    volumes:
+      - ./app:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+
+  # Той самий образ, що й app. supercronic працює від www-data
+  # і передає задачам змінні оточення контейнера (DB_*).
+  cron:
+    <<: *php
+    command: ["supercronic", "/etc/supercronic/crontab"]
+    volumes:
+      - ./app:/var/www/html
+      - ./docker/cron/crontab:/etc/supercronic/crontab:ro
+    # on-failure, а не unless-stopped: не стартує сам після перезавантаження ноутбука.
+    restart: on-failure
+
+  # Node LTS для npm install, vite dev server і vite build.
+  # Під профілем: стартує лише через make front-dev / front-build / front-install.
+  node:
+    image: node:24-alpine
+    profiles: ["front"]
+    user: "${PUID:-1000}:${PGID:-1000}"
+    working_dir: /app/frontend
+    volumes:
+      - ./app:/app
+    environment:
+      # npm пише кеш у $HOME; у контейнері під твоїм UID домашньої теки немає.
+      HOME: /tmp
+    ports:
+      - "127.0.0.1:${HOST_VITE_PORT:-5173}:5173"
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

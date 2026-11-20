@@ -1,0 +1,35 @@
+{
+    "name": "menuorder/app",
+    "description": "QR menu for a cafe: guests order from the table, staff gets orders in Telegram.",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.4",
+        "ext-curl": "*",
+        "ext-gd": "*",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
+        "vlucas/phpdotenv": "^5.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "8.4"
+        }
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.3",
+        "phpunit/phpunit": "^12.5"
+    }
+}
