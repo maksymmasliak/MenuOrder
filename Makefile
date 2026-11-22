@@ -67,10 +67,10 @@ shell: sh ## Синонім sh
 composer: ## Composer: make composer c="require vendor/package"
 > $(EXEC) composer $(c)
 
-migrate: ## Застосувати міграції (bin/migrate.php, T04)
+migrate: ## Застосувати міграції (bin/migrate.php, T03)
 > $(EXEC) php bin/migrate.php
 
-admin: ## Створити адміна: make admin email=a@b.c password=... (T04)
+admin: ## Створити адміна: make admin email=a@b.c password=... (T03)
 > $(EXEC) php bin/create-admin.php $(email) $(password)
 
 test: ## Тести (на тестовій БД): make test c="--filter=RouterTest"
@@ -94,7 +94,7 @@ reset-db: ## ВИДАЛИТИ всі дані (том БД) і підняти з
 > $(DC) --profile '*' down -v
 > $(DC) up -d --wait
 
-# ---------------------------------------------------------------- фронтенд (app/frontend, T10)
+# ---------------------------------------------------------------- фронтенд (app/frontend, T15)
 
 front-install: ## npm install у app/frontend
 > $(NODE) npm install

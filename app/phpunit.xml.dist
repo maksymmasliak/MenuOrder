@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="src/bootstrap.php"
          cacheDirectory=".phpunit.cache"
          colors="true"
          failOnRisky="true"
@@ -18,7 +18,11 @@
     </source>
     <php>
         <env name="APP_ENV" value="test" force="true"/>
-        <!-- Tests never touch the working database. -->
+        <!-- Tests never touch the working database.
+             <env> sets only $_ENV and putenv(); Env::get() reads $_SERVER first,
+             where compose already put DB_NAME, so <server> is required too. -->
         <env name="DB_NAME" value="menuorder_test" force="true"/>
+        <server name="APP_ENV" value="test"/>
+        <server name="DB_NAME" value="menuorder_test"/>
     </php>
 </phpunit>

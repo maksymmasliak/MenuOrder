@@ -2,8 +2,8 @@
 # Working directory is /var/www/html (the app/ folder).
 # Jobs are disabled until their scripts exist; enable and run `make restart`.
 
-# T14: retry Telegram notifications (R8)
+# T17: retry Telegram notifications (R8)
 # * * * * * php bin/retry-telegram.php
 
-# T12: purge rate_limit_hits older than one day
+# T08: purge rate_limit_hits older than one day
 # 0 3 * * * php bin/cleanup.php
