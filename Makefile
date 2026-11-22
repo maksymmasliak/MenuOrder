@@ -13,7 +13,7 @@ DB_CLI := mysql -u"$$MYSQL_USER" -p"$$MYSQL_PASSWORD" "$$MYSQL_DATABASE"
 
 .DEFAULT_GOAL := help
 .PHONY: help init build up down restart rebuild ps logs sh shell composer \
-        migrate admin test stan cs cs-fix db reset-db \
+        migrate migrate-test admin seed test stan cs cs-fix db reset-db \
         front-install front-dev front-build clean
 
 help: ## Список команд
@@ -27,7 +27,7 @@ init: ## Перший запуск: .env-файли, образ, composer instal
   test -f app/.env || { cp app/.env.example app/.env; echo ">> Створено app/.env"; created=1; }; \
   if [ $$created = 1 ]; then echo ">> Перевір значення (APP_SECRET, паролі) і запусти make init ще раз."; exit 1; fi
 > @if [ "$(COMPOSE_PROJECT_NAME)" = "changeme" ]; then echo ">> У .env досі changeme у COMPOSE_PROJECT_NAME."; exit 1; fi
-> mkdir -p app $(HOME)/.cache/composer
+> mkdir -p app/frontend $(HOME)/.cache/composer
 > $(DC) build
 > $(RUN) composer install
 > $(DC) up -d --wait
@@ -67,13 +67,19 @@ shell: sh ## Синонім sh
 composer: ## Composer: make composer c="require vendor/package"
 > $(EXEC) composer $(c)
 
-migrate: ## Застосувати міграції (bin/migrate.php, T03)
+migrate: ## Застосувати міграції до робочої БД (bin/migrate.php)
 > $(EXEC) php bin/migrate.php
 
-admin: ## Створити адміна: make admin email=a@b.c password=... (T03)
+migrate-test: ## Застосувати міграції до тестової БД (<DB_NAME><TEST_DB_SUFFIX>)
+> $(DC) exec -e DB_NAME=$(DB_NAME)$(TEST_DB_SUFFIX) app php bin/migrate.php
+
+admin: ## Створити адміна: make admin email=a@b.c (пароль спитає; password=... — небажано, лишається в історії)
 > $(EXEC) php bin/create-admin.php $(email) $(password)
 
-test: ## Тести (на тестовій БД): make test c="--filter=RouterTest"
+seed: ## Демо-меню в порожню робочу БД: 3 категорії, 12 страв, 10 столиків
+> $(EXEC) php bin/seed-demo.php
+
+test: migrate-test ## Тести (на тестовій БД, спершу migrate-test): make test c="--filter=RouterTest"
 > $(EXEC) vendor/bin/phpunit $(c)
 
 stan: ## Статичний аналіз PHPStan
@@ -97,12 +103,15 @@ reset-db: ## ВИДАЛИТИ всі дані (том БД) і підняти з
 # ---------------------------------------------------------------- фронтенд (app/frontend, T15)
 
 front-install: ## npm install у app/frontend
+> mkdir -p app/frontend
 > $(NODE) npm install
 
 front-dev: ## Vite dev server (http://localhost:HOST_VITE_PORT)
+> mkdir -p app/frontend
 > $(DC) --profile front up node
 
 front-build: ## Зібрати Vue у app/public/assets
+> mkdir -p app/frontend
 > $(NODE) npm run build
 
 clean: ## Знести все: контейнери, томи, локальний образ проєкту

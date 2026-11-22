@@ -3,5 +3,5 @@ parameters:
     paths:
         - public
         - src
+        - bin
         - tests
-    # Add bin once it contains PHP files.

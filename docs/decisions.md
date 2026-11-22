@@ -31,3 +31,10 @@
 - **2026-11-21 · T02 · `<server>` поруч з `<env>` у phpunit.xml.** PHPUnit `<env>` пише лише в `$_ENV`/`putenv`, а `Env::get()` читає `$_SERVER` першим, де вже лежить `DB_NAME=menuorder` з compose. Без `<server>` тести працювали б на робочій базі. Запобіжник — тест `SELECT DATABASE() = menuorder_test`.
 - **2026-11-21 · T02 · `Pdo\Mysql` + `Mysql::ATTR_INIT_COMMAND` для `time_zone = '+00:00'`.** Драйверний клас PHP 8.4; `PDO::MYSQL_ATTR_INIT_COMMAND` у 8.5 deprecated. Помилка з'єднання → `RuntimeException` без облікових даних, оригінал у `previous`.
 - **2026-11-21 · T02 · `src/bootstrap.php` створено вже зараз, мінімальним.** Autoload, `Env::load()`, `date_default_timezone_set('UTC')` попри `date.timezone` в ini: UTC стає властивістю коду, а не образу. Збирання залежностей додасться в T10.
+
+## T03 · Схема, міграції, адмін, демо-дані
+
+- **2026-11-22 · T03 · `Migrator` виконує інструкції файлу по одній (розбиття за `;` у кінці рядка).** Мультизапит в одному `exec()` може приховати помилку в наступних інструкціях, а через неявний коміт DDL важливо знати, на якій саме впало (`failed at statement N of M`). Файл пишеться в `migrations` лише після всіх інструкцій; ім'я — строго `NNN_snake_case.sql`, інше — виняток. Межа: без `DELIMITER` і `;` у кінці рядка всередині літералів.
+- **2026-11-22 · T03 · Демо-дані — `bin/seed-demo.php` (`make seed`), а не міграція.** Інакше демо-страви потрапили б на прод і в `menuorder_test`. Скрипт відмовляє при `APP_ENV=prod` або непорожніх таблицях. `make test` спершу запускає `migrate-test` (`exec -e DB_NAME=…_test`: `Env::get()` читає `$_SERVER` першим), щоб схема тестової БД не відставала.
+- **2026-11-22 · T03 · `create-admin.php email [password]`: без аргументу пароль читається зі stdin (на терміналі — приховано, двічі).** Аргумент лишається в історії shell і в `ps`; spec-варіант з аргументом збережено для сумісності. Мінімум 12 символів, email у нижньому регістрі.
+- **2026-11-22 · T03 · `mkdir -p app/frontend` у `init` і `front-*` цілях Makefile.** Якщо теки немає, Docker створює її для bind-mount/`working_dir` від root, і потім `npm` під PUID не може в неї писати.
