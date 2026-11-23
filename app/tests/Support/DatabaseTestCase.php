@@ -65,6 +65,14 @@ abstract class DatabaseTestCase extends TestCase
         }
     }
 
+    /**
+     * @param value-of<self::TABLES> $table
+     */
+    protected function countRows(string $table): int
+    {
+        return (int) $this->pdo->query("SELECT COUNT(*) FROM {$table}")->fetchColumn();
+    }
+
     protected function insertCategory(string $name = 'Test category', bool $isActive = true): int
     {
         $this->pdo->prepare(

@@ -79,11 +79,6 @@ final class DatabaseTestCaseTest extends DatabaseTestCase
         self::assertSame(2, $this->countRows('dining_tables'));
     }
 
-    private function countRows(string $table): int
-    {
-        return (int) $this->pdo->query("SELECT COUNT(*) FROM {$table}")->fetchColumn();
-    }
-
     /**
      * @return array<string, mixed>|false
      */
