@@ -360,6 +360,7 @@ src/
     TelegramRetrier      <- логіка повторних спроб (R8)
     ImageUploader
     QrGenerator
+  Entity/                <- readonly-сутності, які повертають і приймають репозиторії
   Repository/            <- PDO-репозиторії
   Security/              <- Csrf, AdminAuth
   View/                  <- PHP-шаблони адмінки + хелпер e()
