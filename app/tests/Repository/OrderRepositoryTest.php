@@ -9,7 +9,11 @@ use App\Entity\NewOrderItem;
 use App\Repository\OrderRepository;
 use DateTimeImmutable;
 use DateTimeZone;
+use PDO;
 use PDOException;
+use PDOStatement;
+use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\Support\DatabaseTestCase;
 
 final class OrderRepositoryTest extends DatabaseTestCase
@@ -138,6 +142,36 @@ final class OrderRepositoryTest extends DatabaseTestCase
         self::assertSame(0, $this->countRows('orders'));
         self::assertSame(0, $this->countRows('order_items'));
         self::assertFalse($this->pdo->inTransaction());
+    }
+
+    /**
+     * @return iterable<string, array{string|false}>
+     */
+    public static function missingInsertIds(): iterable
+    {
+        yield 'false' => [false];
+        yield 'zero' => ['0'];
+    }
+
+    #[DataProvider('missingInsertIds')]
+    public function testMissingOrderIdRollsBackAndThrows(string|false $lastInsertId): void
+    {
+        // A real MySQL connection never returns these, so the PDO is a mock.
+        $statement = $this->createStub(PDOStatement::class);
+        $statement->method('execute')->willReturn(true);
+
+        $pdo = $this->createMock(PDO::class);
+        $pdo->method('beginTransaction')->willReturn(true);
+        $pdo->method('inTransaction')->willReturn(true);
+        $pdo->method('lastInsertId')->willReturn($lastInsertId);
+        // Only the order insert is prepared: items are never written without an order id.
+        $pdo->expects(self::once())->method('prepare')->willReturn($statement);
+        $pdo->expects(self::never())->method('commit');
+        $pdo->expects(self::once())->method('rollBack')->willReturn(true);
+
+        $this->expectException(RuntimeException::class);
+
+        new OrderRepository($pdo)->save($this->order(1, [new NewOrderItem(1, 'Burger', 24500, 1)]));
     }
 
     private function repository(): OrderRepository

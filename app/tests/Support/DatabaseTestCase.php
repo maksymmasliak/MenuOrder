@@ -22,7 +22,7 @@ abstract class DatabaseTestCase extends TestCase
 
     // Children before parents, so foreign keys never block a DELETE.
     // `migrations` is not here: the schema must survive the cleanup.
-    private const array TABLES = [
+    protected const array TABLES = [
         'order_items',
         'orders',
         'dishes',

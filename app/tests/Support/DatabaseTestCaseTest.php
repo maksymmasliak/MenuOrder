@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use PDO;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 
@@ -69,6 +70,21 @@ final class DatabaseTestCaseTest extends DatabaseTestCase
             ['label' => 'Terrace 2', 'is_active' => 0],
             $this->row("SELECT label, is_active FROM dining_tables WHERE id = {$tableId}"),
         );
+    }
+
+    public function testCleanupCoversEverySchemaTable(): void
+    {
+        // A table missing from TABLES would keep its rows between tests without any error.
+        $schemaTables = $this->pdo->query(
+            "SELECT TABLE_NAME FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME <> 'migrations'",
+        )->fetchAll(PDO::FETCH_COLUMN);
+        $cleanedTables = self::TABLES;
+
+        sort($schemaTables);
+        sort($cleanedTables);
+
+        self::assertSame($schemaTables, $cleanedTables);
     }
 
     public function testDiningTablesWithoutLabelDoNotCollide(): void

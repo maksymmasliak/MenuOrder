@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\NewOrder;
 use DateTimeZone;
 use PDO;
+use RuntimeException;
 use Throwable;
 
 final readonly class OrderRepository
@@ -41,7 +42,12 @@ final readonly class OrderRepository
                     ->format('Y-m-d H:i:s'),
             ]);
             // Read before inserting items: each item insert changes lastInsertId().
-            $orderId = (int) $this->pdo->lastInsertId();
+            $lastInsertId = $this->pdo->lastInsertId();
+            // Without this check, (int) would turn a missing id into order number 0.
+            if ($lastInsertId === false || $lastInsertId === '0') {
+                throw new RuntimeException('The database returned no id for the new order.');
+            }
+            $orderId = (int) $lastInsertId;
 
             $insertItem = $this->pdo->prepare(
                 'INSERT INTO order_items
