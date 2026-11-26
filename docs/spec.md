@@ -110,7 +110,7 @@ QR-меню для кафе. Чистий PHP без фреймворку.
 | `table_id` | FK → dining_tables | |
 | `total_kopecks` | INT UNSIGNED NOT NULL | рахує сервер |
 | `comment` | VARCHAR(200) NULL | |
-| `client_ip_hash` | CHAR(64) NOT NULL | sha256 від IP + `APP_SECRET`, а не сам IP |
+| `client_ip_hash` | CHAR(64) NOT NULL | HMAC-SHA256 від `"ip:" . IP` з `APP_SECRET`, а не сам IP |
 | `telegram_status` | ENUM('pending','sent','failed') NOT NULL DEFAULT 'pending' | |
 | `telegram_attempts` | TINYINT UNSIGNED NOT NULL DEFAULT 0 | |
 | `telegram_last_error` | VARCHAR(500) NULL | |
